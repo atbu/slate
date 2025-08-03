@@ -9,6 +9,10 @@ on:
   pull_request:
     branches: [ "main" ]
 
+defaults:
+  run:
+    working-directory: ${{env.SERVER_ROOT}}
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -50,5 +54,4 @@ jobs:
       run: go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt@latest
 
     - name: Test
-      working-directory: ${{env.SERVER_ROOT}}
       run: go test -json -v ./... | gotestfmt -hide "empty-packages"
