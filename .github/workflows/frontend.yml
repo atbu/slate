@@ -1,0 +1,32 @@
+name: frontend
+
+env:
+  FRONTEND_ROOT: ./frontend
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22.x
+        cache: 'npm'
+    - name: Run npm ci
+      working-directory: ${{env.FRONTEND_ROOT}}
+      run: npm ci
+    - name: Build
+      working-directory: ${{env.FRONTEND_ROOT}}
+      run: npm run build --if-present
