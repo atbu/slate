@@ -6,6 +6,9 @@ env:
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - .github/workflows/frontend.yml
+      - frontend/**
   pull_request:
     branches: [ "main" ]
 
@@ -25,8 +28,7 @@ jobs:
         node-version: 22.x
         cache: 'npm'
         cache-dependency-path: ${{env.FRONTEND_ROOT}}/package-lock.json
-    - name: Run npm ci
-      working-directory: ${{env.FRONTEND_ROOT}}
+    - working-directory: ${{env.FRONTEND_ROOT}}
       run: npm ci
     - name: Build
       working-directory: ${{env.FRONTEND_ROOT}}

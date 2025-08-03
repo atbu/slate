@@ -6,6 +6,9 @@ env:
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - .github/workflows/backend.yml
+      - backend/**
   pull_request:
     branches: [ "main" ]
 
