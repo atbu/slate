@@ -26,7 +26,7 @@ jobs:
         cache-dependency-path: ${{env.BACKEND_ROOT}}/go.sum
 
     - name: Build
-      working-directory: ${{env.SERVER_ROOT}}
+      working-directory: ${{env.BACKEND_ROOT}}
       run: go build -v ./...
 
     - name: Store binaries
@@ -51,5 +51,5 @@ jobs:
       run: go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt@latest
 
     - name: Test
-      working-directory: ${{env.SERVER_ROOT}}
+      working-directory: ${{env.BACKEND_ROOT}}
       run: go test -json -v ./... | gotestfmt -hide "empty-packages"
