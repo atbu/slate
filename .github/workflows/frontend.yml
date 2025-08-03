@@ -24,6 +24,7 @@ jobs:
       with:
         node-version: 22.x
         cache: 'npm'
+        cache-dependency-path: ${{env.FRONTEND_ROOT}}/package-lock.json
     - name: Run npm ci
       working-directory: ${{env.FRONTEND_ROOT}}
       run: npm ci
