@@ -21,14 +21,16 @@ type AuthService struct {
 	refreshTokenRepo *models.RefreshTokenRepository
 	jwtSecret        []byte
 	accessTokenTTL   time.Duration
+	refreshTokenTTL  time.Duration
 }
 
-func NewAuthService(userRepo *models.UserRepository, refreshTokenRepo *models.RefreshTokenRepository, jwtSecret string, accessTokenTTL time.Duration) *AuthService {
+func NewAuthService(userRepo *models.UserRepository, refreshTokenRepo *models.RefreshTokenRepository, jwtSecret string, accessTokenTTL time.Duration, refreshTokenTTL time.Duration) *AuthService {
 	return &AuthService{
 		userRepo:         userRepo,
 		refreshTokenRepo: refreshTokenRepo,
 		jwtSecret:        []byte(jwtSecret),
 		accessTokenTTL:   accessTokenTTL,
+		refreshTokenTTL:  refreshTokenTTL,
 	}
 }
 
@@ -115,7 +117,7 @@ func (s *AuthService) ValidateToken(tokenString string) (jwt.MapClaims, error) {
 	return nil, ErrInvalidToken
 }
 
-func (s *AuthService) LoginWithRefresh(email, password string, refreshTokenTTL time.Duration) (accessToken string, refreshToken string, err error) {
+func (s *AuthService) LoginWithRefresh(email, password string) (accessToken string, refreshToken string, err error) {
 	user, err := s.userRepo.GetUserByEmail(email)
 	if err != nil {
 		return "", "", ErrInvalidCredentials
@@ -130,7 +132,7 @@ func (s *AuthService) LoginWithRefresh(email, password string, refreshTokenTTL t
 		return "", "", err
 	}
 
-	token, err := s.refreshTokenRepo.CreateRefreshToken(user.ID, refreshTokenTTL)
+	token, err := s.refreshTokenRepo.CreateRefreshToken(user.ID, s.refreshTokenTTL)
 	if err != nil {
 		return "", "", err
 	}
