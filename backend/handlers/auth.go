@@ -4,14 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/atbu/slate/backend/auth"
 )
 
 type AuthHandler struct {
-	authService     *auth.AuthService
-	refreshTokenTTL time.Duration
+	authService *auth.AuthService
 }
 
 func NewAuthHandler(authService *auth.AuthService) *AuthHandler {
@@ -72,7 +70,7 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
-	Token string `json:"token"`
+	AuthToken string `json:"auth_token"`
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -82,7 +80,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.authService.Login(req.Email, req.Password)
+	authToken, refreshToken, err := h.authService.LoginWithRefresh(req.Email, req.Password)
 	if err != nil {
 		if errors.Is(err, auth.ErrInvalidCredentials) {
 			http.Error(w, "Invalid credentials", http.StatusUnauthorized)
@@ -92,13 +90,19 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := LoginResponse{Token: token}
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		Path:     "/api/auth/refresh",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
+		MaxAge:   7 * 24 * 60 * 60, // 7 days
+	})
+
+	response := LoginResponse{AuthToken: authToken}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
-}
-
-type RefreshRequest struct {
-	RefreshToken string `json:"refresh_token"`
 }
 
 type RefreshResponse struct {
@@ -106,13 +110,12 @@ type RefreshResponse struct {
 }
 
 func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
-	var req RefreshRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
-		return
+	cookie, err := r.Cookie("refresh_token")
+	if err != nil {
+		http.Error(w, "Refresh token cookie not found", http.StatusUnauthorized)
 	}
 
-	token, err := h.authService.RefreshAccessToken(req.RefreshToken)
+	token, err := h.authService.RefreshAccessToken(cookie.Value)
 	if err != nil {
 		if errors.Is(err, auth.ErrInvalidToken) || errors.Is(err, auth.ErrExpiredToken) {
 			http.Error(w, "Invalid or expired refresh token", http.StatusUnauthorized)

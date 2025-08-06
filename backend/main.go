@@ -20,7 +20,7 @@ func loadEnv() {
 		log.Println("No .env file, using environment variables")
 	}
 
-	requiredVars := []string{"DATABASE_URL", "JWT_SECRET"}
+	requiredVars := []string{"DATABASE_URL", "JWT_SECRET", "REFRESH_SECRET", "ACCESS_TOKEN_EXPIRY", "REFRESH_TOKEN_EXPIRY"}
 	for _, v := range requiredVars {
 		if os.Getenv(v) == "" {
 			log.Fatalf("Required environment variable %s is not set", v)
@@ -30,6 +30,18 @@ func loadEnv() {
 
 func main() {
 	loadEnv()
+
+	accessTokenTTLStr := os.Getenv("ACCESS_TOKEN_EXPIRY")
+	accessTokenTTL, err := time.ParseDuration(accessTokenTTLStr)
+	if err != nil {
+		log.Fatalf("Error parsing access token expiry duration: %s", err)
+	}
+
+	refreshTokenTTLStr := os.Getenv("REFRESH_TOKEN_EXPIRY")
+	refreshTokenTTL, err := time.ParseDuration(refreshTokenTTLStr)
+	if err != nil {
+		log.Fatalf("Error parsing refresh token expiry duration: %s", err)
+	}
 
 	database, err := db.Connect(os.Getenv("DATABASE_URL"))
 	if err != nil {
@@ -41,7 +53,7 @@ func main() {
 	userRepo := models.NewUserRepository(database)
 	refreshTokenRepo := models.NewRefreshTokenRepository(database)
 
-	authService := auth.NewAuthService(userRepo, refreshTokenRepo, os.Getenv("JWT_SECRET"), 15*time.Minute)
+	authService := auth.NewAuthService(userRepo, refreshTokenRepo, os.Getenv("JWT_SECRET"), accessTokenTTL, refreshTokenTTL)
 
 	authHandler := handlers.NewAuthHandler(authService)
 	//userHandler := handlers.NewUserHandler(userRepo)
