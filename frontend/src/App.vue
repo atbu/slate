@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import Button from "primevue/button";
+import LoginForm from "@/components/LoginForm.vue";
 </script>
 
 <template>
-    <Button label="Hello world!" />
+    <LoginForm />
 </template>
 
 <style scoped></style>
