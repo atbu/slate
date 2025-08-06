@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/atbu/slate/backend/auth"
@@ -69,10 +70,6 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
-type LoginResponse struct {
-	AuthToken string `json:"auth_token"`
-}
-
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -91,18 +88,30 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &http.Cookie{
+		Name:     "auth_token",
+		Value:    authToken,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
+		MaxAge:   30 * 60, // 30 minutes, but this shouldn't be hardcoded
+	})
+
+	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshToken,
 		Path:     "/api/auth/refresh",
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteStrictMode,
-		MaxAge:   7 * 24 * 60 * 60, // 7 days
+		MaxAge:   7 * 24 * 60 * 60, // 7 days, but this shouldn't be hardcoded
 	})
 
-	response := LoginResponse{AuthToken: authToken}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write([]byte{})
+	if err != nil {
+		log.Printf("Cannot send 200 response to login: %v", err)
+	}
 }
 
 type RefreshResponse struct {
