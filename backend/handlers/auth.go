@@ -185,14 +185,18 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   -1,
 		Path:     "/",
 		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
 	}
 
 	refreshTokenRevokeCookie := &http.Cookie{
 		Name:     "refresh_token",
 		Value:    "",
 		MaxAge:   -1,
-		Path:     "/",
+		Path:     "/api/auth",
 		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
 	}
 
 	http.SetCookie(w, authTokenRevokeCookie)
