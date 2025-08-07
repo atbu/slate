@@ -64,6 +64,7 @@ func main() {
 
 	protected := r.PathPrefix("/api").Subrouter()
 	protected.Use(middleware.AuthMiddleware(authService))
+	protected.HandleFunc("/auth/currentuser", authHandler.CurrentUser).Methods("GET")
 
 	port := os.Getenv("PORT")
 	if port == "" {

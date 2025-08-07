@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -136,5 +137,43 @@ func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 
 	response := RefreshResponse{Token: token}
 	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+type CurrentUserResponse struct {
+	Sub      string  `json:"sub"`
+	Username string  `json:"username"`
+	Email    string  `json:"email"`
+	Exp      float64 `json:"exp"`
+	Iat      float64 `json:"iat"`
+}
+
+func (h *AuthHandler) CurrentUser(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("auth_token")
+	if err != nil {
+		http.Error(w, "Not logged in", http.StatusUnauthorized)
+	}
+
+	claims, err := h.authService.ValidateToken(cookie.Value)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to get JWT token claims: %v", err), http.StatusInternalServerError)
+	}
+
+	sub := claims["sub"].(string)
+	username := claims["username"].(string)
+	email := claims["email"].(string)
+	exp := claims["exp"].(float64)
+	iat := claims["iat"].(float64)
+
+	response := CurrentUserResponse{
+		Sub:      sub,
+		Username: username,
+		Email:    email,
+		Exp:      exp,
+		Iat:      iat,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
