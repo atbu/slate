@@ -101,7 +101,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshToken,
-		Path:     "/api/auth/refresh",
+		Path:     "/api/auth",
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteStrictMode,
@@ -176,4 +176,31 @@ func (h *AuthHandler) CurrentUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
+}
+
+func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	authTokenRevokeCookie := &http.Cookie{
+		Name:     "auth_token",
+		Value:    "",
+		MaxAge:   -1,
+		Path:     "/",
+		HttpOnly: true,
+	}
+
+	refreshTokenRevokeCookie := &http.Cookie{
+		Name:     "refresh_token",
+		Value:    "",
+		MaxAge:   -1,
+		Path:     "/",
+		HttpOnly: true,
+	}
+
+	http.SetCookie(w, authTokenRevokeCookie)
+	http.SetCookie(w, refreshTokenRevokeCookie)
+
+	w.WriteHeader(http.StatusOK)
+	_, err := w.Write([]byte{})
+	if err != nil {
+		log.Printf("Cannot send 200 response: %v", err)
+	}
 }
