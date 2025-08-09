@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/atbu/slate/backend/auth"
 )
@@ -93,7 +94,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Value:    authToken,
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   false,
 		SameSite: http.SameSiteStrictMode,
 		MaxAge:   30 * 60, // 30 minutes, but this shouldn't be hardcoded
 	})
@@ -103,7 +104,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Value:    refreshToken,
 		Path:     "/api/auth",
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   false,
 		SameSite: http.SameSiteStrictMode,
 		MaxAge:   7 * 24 * 60 * 60, // 7 days, but this shouldn't be hardcoded
 	})
@@ -179,28 +180,27 @@ func (h *AuthHandler) CurrentUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	authTokenRevokeCookie := &http.Cookie{
+	http.SetCookie(w, &http.Cookie{
 		Name:     "auth_token",
 		Value:    "",
-		MaxAge:   -1,
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   false,
 		SameSite: http.SameSiteStrictMode,
-	}
+		MaxAge:   -1,
+		Expires:  time.Unix(0, 0),
+	})
 
-	refreshTokenRevokeCookie := &http.Cookie{
+	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    "",
-		MaxAge:   -1,
 		Path:     "/api/auth",
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   false,
 		SameSite: http.SameSiteStrictMode,
-	}
-
-	http.SetCookie(w, authTokenRevokeCookie)
-	http.SetCookie(w, refreshTokenRevokeCookie)
+		MaxAge:   -1,
+		Expires:  time.Unix(0, 0),
+	})
 
 	w.WriteHeader(http.StatusOK)
 	_, err := w.Write([]byte{})

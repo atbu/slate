@@ -62,11 +62,11 @@ func main() {
 	r.HandleFunc("/api/auth/register", authHandler.Register).Methods("POST")
 	r.HandleFunc("/api/auth/login", authHandler.Login).Methods("POST")
 	r.HandleFunc("/api/auth/refresh", authHandler.RefreshToken).Methods("POST")
+	r.HandleFunc("/api/auth/logout", authHandler.Logout).Methods("POST")
 
 	protected := r.PathPrefix("/api").Subrouter()
 	protected.Use(middleware.AuthMiddleware(authService))
 	protected.HandleFunc("/auth/currentuser", authHandler.CurrentUser).Methods("GET")
-	protected.HandleFunc("/auth/logout", authHandler.Logout).Methods("POST")
 
 	port := os.Getenv("PORT")
 	if port == "" {
