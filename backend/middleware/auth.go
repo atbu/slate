@@ -20,6 +20,7 @@ func AuthMiddleware(authService *auth.AuthService) func(http.Handler) http.Handl
 			cookie, err := r.Cookie("auth_token")
 			if err != nil || cookie == nil {
 				http.Error(w, "Not logged in", http.StatusUnauthorized)
+				return
 			}
 
 			claims, err := authService.ValidateToken(cookie.Value)
