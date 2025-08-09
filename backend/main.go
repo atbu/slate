@@ -11,6 +11,7 @@ import (
 	"github.com/atbu/slate/backend/handlers"
 	"github.com/atbu/slate/backend/middleware"
 	"github.com/atbu/slate/backend/models"
+	"github.com/atbu/slate/backend/services"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
@@ -53,11 +54,14 @@ func main() {
 
 	userRepo := models.NewUserRepository(database)
 	refreshTokenRepo := models.NewRefreshTokenRepository(database)
+	ticketRepo := models.NewTicketRepository(database)
 
 	authService := auth.NewAuthService(userRepo, refreshTokenRepo, os.Getenv("JWT_SECRET"), accessTokenTTL, refreshTokenTTL)
+	ticketService := services.NewTicketService(ticketRepo)
 
 	authHandler := handlers.NewAuthHandler(authService)
 	//userHandler := handlers.NewUserHandler(userRepo)
+	ticketHandler := handlers.NewTicketHandler(ticketService)
 
 	r.HandleFunc("/api/auth/register", authHandler.Register).Methods("POST")
 	r.HandleFunc("/api/auth/login", authHandler.Login).Methods("POST")
@@ -67,6 +71,7 @@ func main() {
 	protected := r.PathPrefix("/api").Subrouter()
 	protected.Use(middleware.AuthMiddleware(authService))
 	protected.HandleFunc("/auth/currentuser", authHandler.CurrentUser).Methods("GET")
+	protected.HandleFunc("/tickets", ticketHandler.CreateTicket).Methods("POST")
 
 	port := os.Getenv("PORT")
 	if port == "" {
