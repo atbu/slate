@@ -78,7 +78,6 @@ func main() {
 		AllowedMethods:   []string{"GET", "POST"},
 		AllowedHeaders:   []string{"Content-Type"},
 		AllowCredentials: true,
-		Debug:            true,
 	})
 	handler := c.Handler(r)
 
